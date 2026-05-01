@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 
-BINANCE_URL = 'https://api.binance.com/api/v3/klines'
+BINANCE_URL = 'https://api.binance.us/api/v3/klines'
 
 def shamlarni_ol(symbol: str, interval: str = '15m', limit: int = 250) -> pd.DataFrame:
     params = {'symbol': symbol, 'interval': interval, 'limit': limit}
