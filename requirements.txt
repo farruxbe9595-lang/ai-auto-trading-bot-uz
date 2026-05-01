@@ -1,0 +1,7 @@
+requests==2.32.3
+python-dotenv==1.0.1
+pandas==2.2.2
+ta==0.11.0
+openai==1.55.3
+python-telegram-bot==21.6
+matplotlib==3.9.2

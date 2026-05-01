@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+saqlash/*.db
+saqlash/*.log
+hisobotlar/kunlik/*.json
+hisobotlar/oylik/*.json
+hisobotlar/oylik/*.png
