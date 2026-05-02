@@ -1,17 +1,14 @@
 from asosiy.sozlamalar import (
-    BITTA_SAVDO_XAVFI_USD, KUNLIK_MAKSIMAL_ZARAR_USD,
-    KUNLIK_MAKSIMAL_SAVDO, KETMA_KET_ZARAR_LIMITI,
-    MIN_ISHONCH_FOIZI, MIN_FOYDA_XAVF_NISBATI
+    BITTA_SAVDO_USD,
+    KUNLIK_MAKSIMAL_ZARAR_USD,
+    KUNLIK_MAKSIMAL_SAVDO,
+    KETMA_KET_ZARAR_LIMITI,
+    MIN_ISHONCH_FOIZI,
+    MIN_FOYDA_XAVF_NISBATI,
+    MAKSIMAL_OCHIQ_SAVDO,
+    BIR_COIN_BIR_SAVDO
 )
-from saqlash.baza import bugungi_statistika, ochiq_savdolar
-
-MAX_OCHIQ_SAVDO = 5
-
-
-def ochiq_savdo_limit_tekshir():
-    if len(ochiq_savdolar()) >= MAX_OCHIQ_SAVDO:
-        return False, 'Maksimum ochiq savdo limiti.'
-    return True, 'OK'
+from saqlash.baza import bugungi_statistika, ochiq_savdolar, balans_holati
 
 
 def xavfni_tekshir(tavsiya):
@@ -21,10 +18,19 @@ def xavfni_tekshir(tavsiya):
     if tavsiya['tavsiya'] == 'KUTISH':
         return False, 'Bot kutishni tanladi.'
 
-    # Maksimum ochiq savdo limiti
-    limit_ok, msg = ochiq_savdo_limit_tekshir()
-    if not limit_ok:
-        return False, msg
+    ochiq = ochiq_savdolar()
+
+    if len(ochiq) >= MAKSIMAL_OCHIQ_SAVDO:
+        return False, f'Maksimum ochiq savdo limiti: {MAKSIMAL_OCHIQ_SAVDO} ta.'
+
+    if BIR_COIN_BIR_SAVDO:
+        for s in ochiq:
+            if s['symbol'] == tavsiya['symbol']:
+                return False, f'{tavsiya["symbol"]} bo‘yicha savdo allaqachon ochiq.'
+
+    balans = balans_holati()
+    if balans['erkin'] < BITTA_SAVDO_USD:
+        return False, f'Erkin balans yetarli emas. Erkin: {balans["erkin"]}$'
 
     if tavsiya['ishonch_foizi'] < MIN_ISHONCH_FOIZI:
         return False, 'Ishonchlilik foizi past.'
@@ -48,7 +54,7 @@ def xavfni_tekshir(tavsiya):
     if stat['savdo_soni'] >= KUNLIK_MAKSIMAL_SAVDO:
         return False, 'Kunlik savdo limiti tugadi.'
 
-    if abs(stat['foyda_zarar']) >= KUNLIK_MAKSIMAL_ZARAR_USD and stat['foyda_zarar'] < 0:
+    if stat['foyda_zarar'] < 0 and abs(stat['foyda_zarar']) >= KUNLIK_MAKSIMAL_ZARAR_USD:
         return False, 'Kunlik zarar limiti tugadi.'
 
     if stat['ketma_ket_zarar'] >= KETMA_KET_ZARAR_LIMITI:
@@ -58,13 +64,14 @@ def xavfni_tekshir(tavsiya):
 
 
 def savdo_hajmini_hisobla(tavsiya):
+    """
+    Endi har savdo $100 bilan ochiladi.
+    miqdor = $100 / kirish narxi
+    """
     narx = tavsiya['narx']
-    sl = tavsiya['zararni_toxtatish']
 
-    bir_dona_xavfi = abs(narx - sl)
-
-    if bir_dona_xavfi <= 0:
+    if narx <= 0:
         return 0
 
-    miqdor = BITTA_SAVDO_XAVFI_USD / bir_dona_xavfi
-    return round(miqdor, 6)
+    miqdor = BITTA_SAVDO_USD / narx
+    return round(miqdor, 8)
