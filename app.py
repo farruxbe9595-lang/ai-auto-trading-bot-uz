@@ -30,8 +30,11 @@ def bitta_aylanish():
 
         if ruxsat and SINOV_SAVDOSI and not REAL_SAVDO:
             trade_id = sinov_savdo_och(t)
+            
             if trade_id:
-                telegramga_yubor(f'✅ Sinov savdosi ochildi. ID: {trade_id} | {symbol}')
+                telegramga_yubor(f'✅ Savdo ochildi: {t["symbol"]}')
+            else:
+                logger.info("Savdo ochilmadi (limit yoki coin band)")
 
         if ruxsat and REAL_SAVDO:
             # Xavfsizlik uchun real order kodi bu versiyada ataylab faollashtirilmagan.
