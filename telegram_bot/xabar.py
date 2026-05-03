@@ -35,3 +35,42 @@ Xavf tekshiruvi: <b>{xavf_matni}</b>
 
 🧠 {ai_matni}
 """
+def balans_xabari():
+    from saqlash.baza import balans_holati, ochiq_savdolar, bugungi_statistika
+    from asosiy.sozlamalar import MAKSIMAL_OCHIQ_SAVDO
+
+    balans = balans_holati()
+    ochiq = len(ochiq_savdolar())
+    stat = bugungi_statistika()
+
+    return (
+        f"💼 <b>BALANS HOLATI</b>\n"
+        f"Umumiy balans: <b>{balans['umumiy']:.2f}$</b>\n"
+        f"Erkin balans: <b>{balans['erkin']:.2f}$</b>\n"
+        f"Band balans: <b>{balans['band']:.2f}$</b>\n"
+        f"Ochiq savdolar: <b>{ochiq}/{MAKSIMAL_OCHIQ_SAVDO}</b>\n"
+        f"Bugungi natija: <b>{stat['foyda_zarar']:.2f}$</b>\n"
+        f"Ketma-ket zarar: <b>{stat['ketma_ket_zarar']}</b>"
+    )
+
+
+def savdo_ochildi_xabari(symbol):
+    from asosiy.sozlamalar import BITTA_SAVDO_USD
+
+    return (
+        f"✅ <b>Savdo ochildi: {symbol}</b>\n"
+        f"💰 Tikilgan: <b>{BITTA_SAVDO_USD:.2f}$</b>\n\n"
+        f"{balans_xabari()}"
+    )
+
+
+def savdo_yopildi_xabari(trade_id, symbol, fz, sabab):
+    belgi = "✅" if fz >= 0 else "❌"
+
+    return (
+        f"📌 <b>Sinov savdosi yopildi</b>\n"
+        f"ID: <b>{trade_id}</b> | {symbol}\n"
+        f"{belgi} Natija: <b>{fz:.4f}$</b>\n"
+        f"Sabab: <b>{sabab}</b>\n\n"
+        f"{balans_xabari()}"
+    )
