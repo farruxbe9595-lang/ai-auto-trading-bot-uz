@@ -41,7 +41,7 @@ def bitta_aylanish():
             trade_id = sinov_savdo_och(t)
         
             if trade_id:
-                telegramga_yubor(savdo_ochildi_xabari(t["symbol"]))
+                telegramga_yubor(savdo_ochildi_xabari(t))
             else:
                 logger.info("Savdo ochilmadi (limit yoki coin band)")
                             
