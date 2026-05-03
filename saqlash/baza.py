@@ -218,7 +218,37 @@ def barcha_savdolar():
     con = ulanish()
     con.row_factory = sqlite3.Row
     cur = con.cursor()
+    
+from datetime import datetime, timedelta
 
+def oxirgi_coin_zarari_vaqti(symbol):
+    con = ulanish()
+    cur = con.cursor()
+
+    row = cur.execute(
+        """SELECT yopilish_vaqti FROM savdolar
+           WHERE symbol=? AND holat='YOPILGAN' AND foyda_zarar < 0
+           ORDER BY id DESC LIMIT 1""",
+        (symbol,)
+    ).fetchone()
+
+    con.close()
+
+    if not row or not row[0]:
+        return None
+
+    try:
+        return datetime.fromisoformat(row[0])
+    except Exception:
+        return None
+
+
+def coin_bloklanganmi(symbol, blok_soat):
+    t = oxirgi_coin_zarari_vaqti(symbol)
+    if not t:
+        return False
+
+    return (datetime.now() - t).total_seconds() < blok_soat * 3600
     rows = cur.execute('SELECT * FROM savdolar ORDER BY id').fetchall()
 
     con.close()
