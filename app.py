@@ -7,7 +7,7 @@ from strategiya.tavsiya_dvigateli import tavsiya_hisobla
 from strategiya.ai_tekshiruvchi import ai_izoh
 from xavf.xavf_boshqaruvchisi import xavfni_tekshir
 from savdo.sinov_savdosi import sinov_savdo_och, ochiq_savdolarni_tekshir
-from telegram_bot.xabar import telegramga_yubor, tavsiya_xabari
+from telegram_bot.xabar import telegramga_yubor, tavsiya_xabari, savdo_ochildi_xabari, savdo_yopildi_xabari
 from saqlash.baza import bazani_tayyorla, tavsiyani_saqlash
 from hisobotlar.hisobot_yaratish import oylik_hisobot_yarat
 
@@ -32,7 +32,7 @@ def bitta_aylanish():
             trade_id = sinov_savdo_och(t)
             
             if trade_id:
-                telegramga_yubor(f'✅ Savdo ochildi: {t["symbol"]}')
+                telegramga_yubor(savdo_ochildi_xabari(t["symbol"]))
             else:
                 logger.info("Savdo ochilmadi (limit yoki coin band)")
 
@@ -42,7 +42,7 @@ def bitta_aylanish():
 
     yopilganlar = ochiq_savdolarni_tekshir(joriy_narxlar)
     for trade_id, symbol, fz, sabab in yopilganlar:
-        telegramga_yubor(f'📌 Sinov savdosi yopildi. ID: {trade_id} | {symbol} | Natija: {fz:.4f}$ | {sabab}')
+        telegramga_yubor(savdo_yopildi_xabari(trade_id, symbol, fz, sabab))
 
 
 def main():
