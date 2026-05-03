@@ -25,9 +25,7 @@ def bitta_aylanish():
         ai_matni = ai_izoh(t)
         logger.info('%s | %s | %.1f%% | %s', symbol, t['tavsiya'], t['ishonch_foizi'], xavf_matni)
 
-        if t['tavsiya'] != 'KUTISH':
-            telegramga_yubor(tavsiya_xabari(t, xavf_matni, ai_matni))
-
+        
         if ruxsat and SINOV_SAVDOSI and not REAL_SAVDO:
             trade_id = sinov_savdo_och(t)
             
