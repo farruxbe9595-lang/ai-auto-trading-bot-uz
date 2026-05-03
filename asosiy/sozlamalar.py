@@ -47,3 +47,6 @@ os.makedirs(HISOBOT_DIR, exist_ok=True)
 
 DB_PATH = os.path.join(SAQLASH_DIR, 'savdolar.db')
 LOG_PATH = os.path.join(SAQLASH_DIR, 'bot.log')
+
+# Zarar ko‘rgan coinni vaqtincha bloklash
+COIN_ZARAR_BLOK_SOAT = float(os.getenv('COIN_ZARAR_BLOK_SOAT', '6'))
