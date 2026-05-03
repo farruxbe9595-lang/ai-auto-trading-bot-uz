@@ -6,6 +6,7 @@ from malumot.binance_malumot import shamlarni_ol
 from strategiya.tavsiya_dvigateli import tavsiya_hisobla
 from strategiya.ai_tekshiruvchi import ai_izoh
 from xavf.xavf_boshqaruvchisi import xavfni_tekshir
+from savdo.sinov_savdosi import ochiq_savdolar_royxati
 from savdo.sinov_savdosi import sinov_savdo_och, ochiq_savdolarni_tekshir
 from telegram_bot.xabar import telegramga_yubor, tavsiya_xabari, savdo_ochildi_xabari, savdo_yopildi_xabari
 from saqlash.baza import bazani_tayyorla, tavsiyani_saqlash
@@ -27,13 +28,23 @@ def bitta_aylanish():
 
         
         if ruxsat and SINOV_SAVDOSI and not REAL_SAVDO:
+            ochiq = ochiq_savdolar_royxati()
+        
+            if t["symbol"] in [s["symbol"] for s in ochiq]:
+                logger.info(f"{t['symbol']} allaqachon ochiq — skip")
+                continue
+        
+            if len(ochiq) >= 4:
+                logger.info("Max savdo limiti — skip")
+                continue
+        
             trade_id = sinov_savdo_och(t)
-            
+        
             if trade_id:
                 telegramga_yubor(savdo_ochildi_xabari(t["symbol"]))
             else:
                 logger.info("Savdo ochilmadi (limit yoki coin band)")
-
+                            
         if ruxsat and REAL_SAVDO:
             # Xavfsizlik uchun real order kodi bu versiyada ataylab faollashtirilmagan.
             telegramga_yubor('⚠️ REAL_SAVDO yoqilgan, lekin real order moduli xavfsizlik uchun bloklangan. Avval alohida tekshiruv kerak.')
