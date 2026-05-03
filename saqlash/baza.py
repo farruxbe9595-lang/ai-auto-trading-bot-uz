@@ -218,8 +218,12 @@ def barcha_savdolar():
     con = ulanish()
     con.row_factory = sqlite3.Row
     cur = con.cursor()
-    
-from datetime import datetime, timedelta
+
+    rows = cur.execute('SELECT * FROM savdolar ORDER BY id').fetchall()
+
+    con.close()
+    return [dict(r) for r in rows]
+
 
 def oxirgi_coin_zarari_vaqti(symbol):
     con = ulanish()
@@ -249,7 +253,3 @@ def coin_bloklanganmi(symbol, blok_soat):
         return False
 
     return (datetime.now() - t).total_seconds() < blok_soat * 3600
-    rows = cur.execute('SELECT * FROM savdolar ORDER BY id').fetchall()
-
-    con.close()
-    return [dict(r) for r in rows]
