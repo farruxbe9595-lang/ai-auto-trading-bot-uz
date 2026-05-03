@@ -54,13 +54,28 @@ def balans_xabari():
     )
 
 
-def savdo_ochildi_xabari(symbol):
+def savdo_ochildi_xabari(t):
     from asosiy.sozlamalar import BITTA_SAVDO_USD
+    from saqlash.baza import balans_holati, ochiq_savdolar
+    from asosiy.sozlamalar import MAKSIMAL_OCHIQ_SAVDO
+
+    balans = balans_holati()
+    ochiq = len(ochiq_savdolar())
+
+    sl = 'yo‘q' if t['zararni_toxtatish'] is None else f"{t['zararni_toxtatish']:.4f}"
+    tp = 'yo‘q' if t['foydani_olish'] is None else f"{t['foydani_olish']:.4f}"
 
     return (
-        f"✅ <b>Savdo ochildi: {symbol}</b>\n"
+        f"✅ <b>Savdo ochildi: {t['symbol']}</b>\n"
         f"💰 Tikilgan: <b>{BITTA_SAVDO_USD:.2f}$</b>\n\n"
-        f"{balans_xabari()}"
+        f"📌 Kirish narxi: <b>{t['narx']:.4f}</b>\n"
+        f"🛑 Zarar chegarasi: <b>{sl}</b>\n"
+        f"🎯 Foyda chegarasi: <b>{tp}</b>\n"
+        f"📊 Ishonchlilik: <b>{t['ishonch_foizi']}%</b>\n"
+        f"📈 Trend: <b>{t['trend']}</b>\n\n"
+        f"💼 Erkin balans: <b>{balans['erkin']:.2f}$</b>\n"
+        f"📦 Band balans: <b>{balans['band']:.2f}$</b>\n"
+        f"📊 Ochiq savdolar: <b>{ochiq}/{MAKSIMAL_OCHIQ_SAVDO}</b>"
     )
 
 
