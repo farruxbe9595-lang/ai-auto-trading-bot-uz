@@ -9,6 +9,8 @@ from asosiy.sozlamalar import (
     BIR_COIN_BIR_SAVDO
 )
 from saqlash.baza import bugungi_statistika, ochiq_savdolar, balans_holati
+from saqlash.baza import coin_bloklanganmi
+from asosiy.sozlamalar import COIN_ZARAR_BLOK_SOAT
 
 
 def xavfni_tekshir(tavsiya):
@@ -27,6 +29,9 @@ def xavfni_tekshir(tavsiya):
         for s in ochiq:
             if s['symbol'] == tavsiya['symbol']:
                 return False, f'{tavsiya["symbol"]} bo‘yicha savdo allaqachon ochiq.'
+    # Zarar ko‘rgan coin vaqtincha blok
+    if coin_bloklanganmi(tavsiya['symbol'], COIN_ZARAR_BLOK_SOAT):
+        return False, f"{tavsiya['symbol']} vaqtincha bloklangan (zarar)."
 
     balans = balans_holati()
     if balans['erkin'] < BITTA_SAVDO_USD:
