@@ -54,7 +54,7 @@ def balans_xabari():
     )
 
 
-def savdo_ochildi_xabari(t):
+def savdo_ochildi_xabari(t, trade_id):
     from asosiy.sozlamalar import BITTA_SAVDO_USD
     from saqlash.baza import balans_holati, ochiq_savdolar
     from asosiy.sozlamalar import MAKSIMAL_OCHIQ_SAVDO
@@ -67,6 +67,7 @@ def savdo_ochildi_xabari(t):
 
     return (
         f"✅ <b>Savdo ochildi: {t['symbol']}</b>\n"
+        f"🆔 ID: <b>{trade_id}</b>\n"
         f"💰 Tikilgan: <b>{BITTA_SAVDO_USD:.2f}$</b>\n\n"
         f"📌 Kirish narxi: <b>{t['narx']:.4f}</b>\n"
         f"🛑 Zarar chegarasi: <b>{sl}</b>\n"
