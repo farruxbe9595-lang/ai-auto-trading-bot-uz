@@ -1,5 +1,12 @@
 import time
-from asosiy.sozlamalar import SYMBOLS, INTERVAL, CHECK_SECONDS, SINOV_SAVDOSI, REAL_SAVDO
+from asosiy.sozlamalar import (
+    SYMBOLS,
+    INTERVAL,
+    CHECK_SECONDS,
+    SINOV_SAVDOSI,
+    REAL_SAVDO,
+    MAKSIMAL_OCHIQ_SAVDO,
+)
 from asosiy.logger import logger
 from asosiy.xavfsizlik import boshlangich_xavfsizlik_tekshiruvi
 from malumot.binance_malumot import shamlarni_ol
@@ -34,8 +41,8 @@ def bitta_aylanish():
                 logger.info(f"{t['symbol']} allaqachon ochiq — skip")
                 continue
         
-            if len(ochiq) >= 4:
-                logger.info("Max savdo limiti — skip")
+            if len(ochiq) >= MAKSIMAL_OCHIQ_SAVDO:
+                logger.info(f"Max savdo limiti: {MAKSIMAL_OCHIQ_SAVDO} ta — skip")
                 continue
         
             trade_id = sinov_savdo_och(t)
