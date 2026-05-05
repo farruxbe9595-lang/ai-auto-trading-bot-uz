@@ -1,4 +1,5 @@
 import time
+
 from asosiy.sozlamalar import (
     SYMBOLS,
     INTERVAL,
@@ -15,8 +16,12 @@ from strategiya.ai_tekshiruvchi import ai_izoh
 from xavf.xavf_boshqaruvchisi import xavfni_tekshir
 from savdo.sinov_savdosi import sinov_savdo_och, ochiq_savdolarni_tekshir
 from saqlash.baza import bazani_tayyorla, tavsiyani_saqlash, ochiq_savdolar
-from telegram_bot.xabar import telegramga_yubor, tavsiya_xabari, savdo_ochildi_xabari, savdo_yopildi_xabari
-from saqlash.baza import bazani_tayyorla, tavsiyani_saqlash
+from telegram_bot.xabar import (
+    telegramga_yubor,
+    tavsiya_xabari,
+    savdo_ochildi_xabari,
+    savdo_yopildi_xabari,
+)
 from hisobotlar.hisobot_yaratish import oylik_hisobot_yarat
 
 
