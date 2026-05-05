@@ -45,7 +45,10 @@ HISOBOT_DIR = os.path.join(BASE_DIR, 'hisobotlar')
 os.makedirs(SAQLASH_DIR, exist_ok=True)
 os.makedirs(HISOBOT_DIR, exist_ok=True)
 
-DB_PATH = os.path.join(SAQLASH_DIR, 'savdolar.db')
+DATA_DIR = os.getenv("DATA_DIR", SAQLASH_DIR)
+os.makedirs(DATA_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(DATA_DIR, "savdolar.db")
 LOG_PATH = os.path.join(SAQLASH_DIR, 'bot.log')
 
 # Zarar ko‘rgan coinni vaqtincha bloklash
