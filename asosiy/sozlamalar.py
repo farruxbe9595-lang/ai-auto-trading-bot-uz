@@ -53,3 +53,9 @@ LOG_PATH = os.path.join(SAQLASH_DIR, 'bot.log')
 
 # Zarar ko‘rgan coinni vaqtincha bloklash
 COIN_ZARAR_BLOK_SOAT = float(os.getenv('COIN_ZARAR_BLOK_SOAT', '6'))
+
+# AI savdo filtri (faqat riskdan o'tgan savdo nomzodlari uchun ishlaydi)
+AI_SAVDO_FILTRI = os.getenv('AI_SAVDO_FILTRI', 'false').lower() == 'true'
+AI_MIN_ISHONCH = float(os.getenv('AI_MIN_ISHONCH', '80'))
+AI_FILTR_MODEL = os.getenv('AI_FILTR_MODEL', OPENAI_MODEL)
+AI_RADDA_MINIMAL_BALL = float(os.getenv('AI_RADDA_MINIMAL_BALL', '70'))
