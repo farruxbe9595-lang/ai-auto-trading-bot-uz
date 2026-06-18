@@ -59,3 +59,27 @@ AI_SAVDO_FILTRI = os.getenv('AI_SAVDO_FILTRI', 'false').lower() == 'true'
 AI_MIN_ISHONCH = float(os.getenv('AI_MIN_ISHONCH', '80'))
 AI_FILTR_MODEL = os.getenv('AI_FILTR_MODEL', OPENAI_MODEL)
 AI_RADDA_MINIMAL_BALL = float(os.getenv('AI_RADDA_MINIMAL_BALL', '70'))
+
+# ---------------------------------------------------------------------------
+# REAL SAVDO (Binance) — barchasi standart holatda XAVFSIZ/O'CHIQ qiymatlarda
+# ---------------------------------------------------------------------------
+BINANCE_API_KEY = os.getenv('BINANCE_API_KEY', '')
+BINANCE_API_SECRET = os.getenv('BINANCE_API_SECRET', '')
+
+# Standart holatda HAR DOIM testnet — ataylab false qilinmaguncha haqiqiy
+# birjaga signed so'rov ketmaydi.
+BINANCE_TESTNET = os.getenv('BINANCE_TESTNET', 'true').lower() == 'true'
+
+# Ikkinchi, mustaqil tasdiqlash qatlami. REAL_SAVDO=true bo'lishi YETARLI
+# EMAS — bu ham aniq 'true' bo'lishi kerak, aks holda real order moduli
+# baribir ishga tushmaydi. Ikkalasi alohida joyda, ataylab.
+REAL_SAVDO_XAVFNI_QABUL_QILDIM = os.getenv('REAL_SAVDO_XAVFNI_QABUL_QILDIM', 'false').lower() == 'true'
+
+# Real savdoda bitta pozitsiya uchun maksimal qabul qilinadigan slippage
+# (market order kutilgan narxdan qancha farq qilishi mumkin), foizda.
+REAL_MAKSIMAL_SLIPPAGE_FOIZ = float(os.getenv('REAL_MAKSIMAL_SLIPPAGE_FOIZ', '0.5'))
+
+# Real rejimda bir vaqtda ochiq bo'lishi mumkin bo'lgan MAKSIMAL pozitsiya
+# soni — sinov savdosidagi limitdan MUSTAQIL va ataylab juda kichik (1) —
+# birinchi marotaba real pul bilan ishga tushirganda xavfni cheklash uchun.
+REAL_MAKSIMAL_OCHIQ_SAVDO = int(os.getenv('REAL_MAKSIMAL_OCHIQ_SAVDO', '1'))

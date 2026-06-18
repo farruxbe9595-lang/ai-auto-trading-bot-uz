@@ -1,69 +1,124 @@
+"""
+Claude (Anthropic) yordamida ishlaydigan ikkinchi bosqich AI savdo filtri.
+
+strategiya/ai_savdo_filtri.py o'rnini bosadi (OpenAI -> Claude). Maydon nomlari
+loyihangizdagi strategiya/tavsiya_dvigateli.py (tavsiya_hisobla) qaytaradigan
+HAQIQIY lug'atga mos: symbol, narx, rsi, ema50, ema200, trend, vol_holat,
+vol_foiz, tayanch, tosiq, tavsiya, ishonch_foizi, zararni_toxtatish,
+foydani_olish, sabablar.
+
+Tashqi interfeys avvalgisi bilan bir xil:
+    ai_savdoni_tekshir(tavsiya: dict, ochiq_savdolar_soni: int = 0)
+    -> (ruxsat: bool, matn: str, data: dict)
+"""
+
+import os
 import json
-import re
-from typing import Dict, Tuple
+import datetime
+from typing import Dict, List, Tuple
+
+from pydantic import BaseModel, Field
 
 from asosiy.logger import logger
 from asosiy.sozlamalar import (
-    OPENAI_API_KEY,
     AI_SAVDO_FILTRI,
     AI_FILTR_MODEL,
     AI_MIN_ISHONCH,
     AI_RADDA_MINIMAL_BALL,
 )
 
+# ---------------------------------------------------------------------------
+_client = None
+_kunlik_chaqiruv_soni = 0
+_kunlik_sana = None
+
+
+def _client_olish():
+    """Anthropic mijozini yaratadi; kalit bo'lmasa None qaytaradi (xato emas)."""
+    global _client
+    if _client is None:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            return None
+        from anthropic import Anthropic
+        _client = Anthropic(api_key=api_key)
+    return _client
+
+
+def _kunlik_limitni_tekshir() -> bool:
+    """Kunlik AI chaqiruvlar sonini cheklab, kutilmagan xarajatdan himoya qiladi."""
+    global _kunlik_chaqiruv_soni, _kunlik_sana
+    bugun = datetime.date.today()
+    if _kunlik_sana != bugun:
+        _kunlik_sana = bugun
+        _kunlik_chaqiruv_soni = 0
+    limit = int(os.getenv("AI_KUNLIK_LIMIT", "200"))
+    if _kunlik_chaqiruv_soni >= limit:
+        return False
+    _kunlik_chaqiruv_soni += 1
+    return True
+
 
 def _float_or_none(value):
     try:
-        if value is None:
-            return None
-        return float(value)
+        return None if value is None else float(value)
     except Exception:
         return None
 
 
 def _fallback_ruxsat(tavsiya: Dict) -> Tuple[bool, str, Dict]:
     """
-    OpenAI API ishlamasa bot to'xtab qolmasligi uchun xavfsiz fallback.
-    Bu AI emas, faqat eng oddiy himoya: confidence juda past bo'lsa rad qiladi.
+    Claude ishlamasa (kalit yo'q, tarmoq xatosi, limit) bot to'xtab qolmasin,
+    lekin xavfsiz tomonga: faqat asosiy ishonch foizi yetarli bo'lsa o'tkazadi.
+    (Asl OpenAI-versiyadagi bilan bir xil mantiq.)
     """
     ishonch = _float_or_none(tavsiya.get("ishonch_foizi")) or 0
     if ishonch < AI_MIN_ISHONCH:
-        return False, f"AI fallback RAD: ishonch {ishonch:.1f}% < {AI_MIN_ISHONCH:.1f}%", {
-            "qaror": "RAD",
-            "ball": 0,
-            "sabab": "AI ishlamadi va signal minimal ishonchdan past.",
-        }
-    return True, "AI fallback TASDIQ: AI ishlamadi, lekin signal minimal ishonchdan yuqori.", {
-        "qaror": "TASDIQ",
-        "ball": 60,
-        "sabab": "AI ishlamadi; xavf filtri va indikator ruxsati asosida davom etildi.",
-    }
+        return (
+            False,
+            f"AI fallback RAD: ishonch {ishonch:.1f}% < {AI_MIN_ISHONCH:.1f}%",
+            {"qaror": "RAD", "ball": 0, "sabab": "AI ishlamadi va signal minimal ishonchdan past."},
+        )
+    return (
+        True,
+        "AI fallback TASDIQ: AI ishlamadi, lekin signal minimal ishonchdan yuqori.",
+        {"qaror": "TASDIQ", "ball": 60, "sabab": "AI ishlamadi; xavf filtri va indikator ruxsati asosida davom etildi."},
+    )
 
 
-def _jsonni_ajrat(text: str) -> Dict:
-    """Model javobidan JSON obyektni ehtiyotkorlik bilan ajratadi."""
-    try:
-        return json.loads(text)
-    except Exception:
-        pass
+class SavdoBaholash(BaseModel):
+    qaror: str = Field(description="Aniq qiymat: 'TASDIQ' yoki 'RAD'")
+    ball: float = Field(description="0 dan 100 gacha ishonch bali")
+    sabab: str = Field(description="Qisqa, aniq sabab, o'zbek tilida")
+    xavf_omillari: List[str] = Field(default_factory=list, description="Topilgan xavf belgilari")
+    kuchli_tomonlar: List[str] = Field(default_factory=list, description="Signalni qo'llab-quvvatlovchi omillar")
 
-    match = re.search(r"\{.*\}", text, flags=re.DOTALL)
-    if not match:
-        raise ValueError("AI javobida JSON topilmadi")
-    return json.loads(match.group(0))
+
+TIZIM_PROMPTI = (
+    "Sen kripto trading bot uchun IKKINCHI BOSQICH xavfsizlik va signal-sifat "
+    "filtrisan. Maqsad: indikator signali yaxshi ko'rinsa ham, yomon market "
+    "context, kech kirish, sideways/choppy bozor, qarshilik (resistance) "
+    "yaqinligi, hajm tasdiqlamasligi yoki risk baland bo'lsa RAD qilish. "
+    "Foyda hech qachon kafolatlanmaydi — sen moliyaviy maslahat bermaysan, "
+    "faqat texnik signal sifatini ehtiyotkorlik bilan baholaysan. "
+    "Noaniq holatda TASDIQ bermagin — shubhada qolsang RAD qil."
+)
 
 
 def ai_savdoni_tekshir(tavsiya: Dict, ochiq_savdolar_soni: int = 0) -> Tuple[bool, str, Dict]:
-    """
-    AI faqat ochilishi mumkin bo'lgan savdoni oxirgi bosqichda tekshiradi.
-    Natija:
-        (ruxsat, matn, raw_json)
-    """
     if not AI_SAVDO_FILTRI:
         return True, "AI filtr o'chirilgan.", {"qaror": "OCHIRILGAN"}
 
-    if not OPENAI_API_KEY:
+    client = _client_olish()
+    if client is None:
         return _fallback_ruxsat(tavsiya)
+
+    if not _kunlik_limitni_tekshir():
+        return (
+            False,
+            "Kunlik AI chaqiruv limitiga yetildi — xavfsizlik uchun RAD qilindi",
+            {"qaror": "RAD"},
+        )
 
     payload = {
         "symbol": tavsiya.get("symbol"),
@@ -84,63 +139,32 @@ def ai_savdoni_tekshir(tavsiya: Dict, ochiq_savdolar_soni: int = 0) -> Tuple[boo
         "ochiq_savdolar_soni": ochiq_savdolar_soni,
     }
 
-    system_prompt = (
-        "Sen kripto trading bot uchun xavfsizlik va signal-sifat filtri sifatida ishlaysan. "
-        "Maqsad: indikator signali yaxshi ko'rinsa ham, yomon market context, kech kirish, "
-        "sideways bozor, resistance yaqinligi, volume tasdiqlamasligi yoki risk baland bo'lsa RAD qilish. "
-        "Foyda kafolatlanmaydi. Faqat ehtiyotkor risk filtri bo'l. "
-        "Javob faqat JSON bo'lsin."
+    qoidalar = (
+        f"Qoidalar:\n"
+        f"- Signal choppy/sideways bozorga o'xshasa RAD.\n"
+        f"- Narx resistance/to'siqqa juda yaqin bo'lsa BUY uchun RAD.\n"
+        f"- Trend va tavsiya mos kelmasa RAD.\n"
+        f"- Ball {AI_RADDA_MINIMAL_BALL} dan past bo'lsa RAD.\n\n"
+        f"Savdo ma'lumotlari:\n{json.dumps(payload, ensure_ascii=False, indent=2)}"
     )
 
-    user_prompt = f"""
-Quyidagi savdo nomzodini analiz qil. Qaror faqat JSON bo'lsin.
-
-JSON schema:
-{{
-  "qaror": "TASDIQ" yoki "RAD",
-  "ball": 0-100,
-  "sabab": "qisqa aniq sabab",
-  "xavf_omillari": ["..."],
-  "kuchli_tomonlar": ["..."]
-}}
-
-Qoidalar:
-- Agar signal choppy/sideways bozorga o'xshasa RAD.
-- Agar narx resistance/tosiqqa juda yaqin bo'lsa BUY uchun RAD.
-- Agar trend va tavsiya mos kelmasa RAD.
-- Agar ball {AI_RADDA_MINIMAL_BALL} dan past bo'lsa RAD.
-- Noaniq holatda TASDIQ bermagin.
-
-Savdo ma'lumotlari:
-{json.dumps(payload, ensure_ascii=False, indent=2)}
-"""
-
     try:
-        from openai import OpenAI
-
-        client = OpenAI(api_key=OPENAI_API_KEY)
-        resp = client.chat.completions.create(
+        javob = client.messages.parse(
             model=AI_FILTR_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.1,
-            response_format={"type": "json_object"},
-            timeout=30,
+            max_tokens=500,
+            system=TIZIM_PROMPTI,
+            messages=[{"role": "user", "content": qoidalar}],
+            output_format=SavdoBaholash,
         )
-        text = resp.choices[0].message.content or "{}"
-        data = _jsonni_ajrat(text)
-
-        qaror = str(data.get("qaror", "RAD")).upper().strip()
-        ball = float(data.get("ball", 0) or 0)
-        sabab = data.get("sabab", "AI sabab qaytarmadi")
-
-        if qaror == "TASDIQ" and ball >= AI_RADDA_MINIMAL_BALL:
-            return True, f"AI TASDIQ: {ball:.0f}/100 — {sabab}", data
-
-        return False, f"AI RAD: {ball:.0f}/100 — {sabab}", data
-
+        baho: SavdoBaholash = javob.parsed_output
     except Exception as e:
-        logger.exception("AI savdo filtri xatosi: %s", e)
+        logger.exception("Claude AI savdo filtri xatosi: %s", e)
         return _fallback_ruxsat(tavsiya)
+
+    qaror = baho.qaror.upper().strip()
+    data = baho.model_dump()
+
+    if qaror == "TASDIQ" and baho.ball >= AI_RADDA_MINIMAL_BALL:
+        return True, f"AI TASDIQ: {baho.ball:.0f}/100 — {baho.sabab}", data
+
+    return False, f"AI RAD: {baho.ball:.0f}/100 — {baho.sabab}", data

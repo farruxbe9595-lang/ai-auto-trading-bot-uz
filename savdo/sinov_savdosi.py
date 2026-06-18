@@ -19,6 +19,15 @@ from asosiy.sozlamalar import (
 
 
 def sinov_savdo_och(tavsiya):
+    # Himoya: bu funksiya endi o'zi ham tekshiradi, faqat chaqiruvchiga ishonmaydi.
+    # (xavf_boshqaruvchisi.xavfni_tekshir buni allaqachon tekshiradi, lekin agar
+    # kelajakda boshqa bir joydan — masalan AI-execution modulidan — to'g'ridan-to'g'ri
+    # chaqirilsa, bu yerda ham himoyalangan bo'lishi kerak.)
+    if tavsiya.get('tavsiya') not in ('SOTIB_OLISH', 'SOTISH'):
+        return None
+    if tavsiya.get('zararni_toxtatish') is None or tavsiya.get('foydani_olish') is None:
+        return None
+
     ochiq = ochiq_savdolar()
 
     if len(ochiq) >= MAKSIMAL_OCHIQ_SAVDO:
